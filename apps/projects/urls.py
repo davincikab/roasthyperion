@@ -10,5 +10,10 @@ urlpatterns = [
     path("<int:pk>/", views.ProjectDetailView.as_view(), name="detail"),
     path("<int:pk>/edit/", views.ProjectUpdateView.as_view(), name="edit"),
     path("<int:pk>/ingest/", views.IngestView.as_view(), name="ingest"),
+    path(
+        "<int:pk>/dismiss-error/",
+        views.DismissIngestErrorView.as_view(),
+        name="dismiss_ingest_error",
+    ),
     path("<int:pk>/tiles/<int:z>/<int:x>/<int:y>.png", views.tile_view, name="tile"),
 ]

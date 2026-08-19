@@ -48,6 +48,15 @@
                             {% else %}
                                 <p>No zip files waiting.</p>
                             {% endif %}
+                            {% if project.ingest_error %}
+                                <p class="message error">{{ project.ingest_error }}</p>
+                                <form method="post" action="{% url 'projects:dismiss_ingest_error' project.pk %}">
+                                    {% csrf_token %}
+                                    <button class="link-button" type="submit">
+                                        <i class="bi bi-x-circle" aria-hidden="true"></i> Dismiss
+                                    </button>
+                                </form>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>

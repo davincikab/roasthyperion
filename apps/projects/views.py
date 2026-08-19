@@ -126,6 +126,22 @@ class IngestView(RoleRequiredMixin, View):
         return redirect(reverse("projects:detail", args=[pk]))
 
 
+class DismissIngestErrorView(RoleRequiredMixin, View):
+    required_roles = (Membership.Role.EDITOR, Membership.Role.ADMIN)
+
+    def get_organization(self):
+        self._project = get_object_or_404(Project, pk=self.kwargs["pk"])
+        return self._project.organization
+
+    def post(self, request, pk):
+        project = self._project
+        project.ingest_error = ""
+        if project.status == Project.Status.FAILED:
+            project.status = Project.Status.PENDING
+        project.save(update_fields=["status", "ingest_error"])
+        return redirect(reverse("projects:list"))
+
+
 @require_GET
 def tile_view(request, pk, z, x, y):
     project = get_object_or_404(Project, pk=pk)
