@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Manage users{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>All users</h1>
+    </div>
+
+    <div class="panel-section">
+        <form class="stacked" method="get" style="margin-bottom: 1rem;">
+            <input type="search" name="q" value="{{ query }}" placeholder="Search by email…" class="annotations-search" style="margin: 0;">
+        </form>
+
+        <table class="team-table">
+            <thead>
+                <tr><th>Email</th><th>Organizations</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>
+                            {{ u.email }}
+                            {% if u.is_superuser %}<span class="status-badge ready">Superuser</span>{% endif %}
+                        </td>
+                        <td>
+                            {% for membership in u.memberships.all %}
+                                {{ membership.organization.name }} ({{ membership.get_role_display }}){% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                <span style="color: var(--color-text-faint);">None</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span class="status-badge {% if u.is_active %}ready{% else %}failed{% endif %}">
+                                {{ u.is_active|yesno:"Active,Inactive" }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if u.id != request.user.id %}
+                                <form method="post" action="{% url 'accounts:user_toggle_active' u.id %}">
+                                    {% csrf_token %}
+                                    <button class="link-button" type="submit">
+                                        <i class="bi {% if u.is_active %}bi-slash-circle{% else %}bi-check-circle{% endif %}" aria-hidden="true"></i>
+                                        {{ u.is_active|yesno:"Deactivate,Activate" }}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4">No users found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if page_obj.has_other_pages %}
+            <nav class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</a>
+                {% endif %}
+                <span class="pagination-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                {% endif %}
+            </nav>
+        {% endif %}
+    </div>
+{% endblock %}

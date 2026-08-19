@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}New project{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>New project</h1>
+    </div>
+    <div class="panel-section" style="max-width: 640px;">
+        <form class="stacked form-grid" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn" type="submit">Create</button>
+        </form>
+    </div>
+{% endblock %}

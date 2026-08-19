@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>Your account</h1>
+    </div>
+
+    <div class="panel-section" style="max-width: 480px;">
+        <h2>Account</h2>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><a class="btn btn-secondary btn-sm" href="{% url 'accounts:password_change' %}"><i class="bi bi-key" aria-hidden="true"></i> Change password</a></p>
+    </div>
+
+    <div class="panel-section" style="max-width: 480px;">
+        <h2>Organizations</h2>
+        {% if memberships %}
+            <table class="team-table">
+                <thead><tr><th>Organization</th><th>Role</th></tr></thead>
+                <tbody>
+                    {% for membership in memberships %}
+                        <tr>
+                            <td>{{ membership.organization.name }}</td>
+                            <td>{{ membership.get_role_display }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>You don't belong to an organization yet.</p>
+        {% endif %}
+    </div>
+{% endblock %}

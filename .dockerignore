@@ -1,0 +1,20 @@
+.git
+.claude
+__pycache__
+*.pyc
+.env
+media
+staticfiles
+ftp_landing
+
+# Legacy gdal2tiles sample pyramid — not part of the app, huge, never needed in the image
+14
+15
+16
+17
+18
+19
+20
+21
+leaflet.html
+tilemapresource.xml

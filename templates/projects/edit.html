@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ project.name }}{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>Edit {{ project.name }}</h1>
+    </div>
+    <div class="panel-section" style="max-width: 640px;">
+        <form class="stacked form-grid" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn" type="submit">Save</button>
+        </form>
+    </div>
+    <a href="{% url 'projects:detail' project.pk %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to project</a>
+{% endblock %}

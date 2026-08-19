@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Team{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>{{ organization.name|default:"Team" }}</h1>
+        {% if organization %}
+            <button class="btn" type="button" onclick="document.getElementById('invite-modal').showModal()"><i class="bi bi-person-plus" aria-hidden="true"></i> Invite member</button>
+        {% endif %}
+    </div>
+
+    {% if not organization %}
+        <div class="empty-state">
+            <p>You don't belong to an organization, so there's no team to manage here.</p>
+            <p>Use Django admin to create or manage organizations directly.</p>
+        </div>
+    {% else %}
+    <div class="panel-section">
+        <h2>Team</h2>
+        <table class="team-table">
+            <thead>
+                <tr><th>Email</th><th>Role</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for membership in memberships %}
+                    <tr>
+                        <td>{{ membership.user.email }}</td>
+                        <td>
+                            <form class="inline-form" method="post" action="{% url 'accounts:team_update_role' membership.id %}">
+                                {% csrf_token %}
+                                <select name="role" onchange="this.form.submit()">
+                                    {% for value, label in role_choices %}
+                                        <option value="{{ value }}" {% if membership.role == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <form class="inline-form" method="post" action="{% url 'accounts:team_remove' membership.id %}">
+                                {% csrf_token %}
+                                <button class="icon-btn" type="submit" title="Remove" aria-label="Remove {{ membership.user.email }}">
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if page_obj.has_other_pages %}
+            <nav class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</a>
+                {% endif %}
+                <span class="pagination-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                {% endif %}
+            </nav>
+        {% endif %}
+    </div>
+
+    <dialog id="invite-modal" class="modal">
+        <h2>Invite a member</h2>
+        <form class="stacked form-grid" method="post" action="{% url 'accounts:team_invite' %}">
+            {% csrf_token %}
+            {{ invite_form.as_p }}
+            <div class="modal-actions">
+                <button class="btn" type="submit">Send invite</button>
+                <button class="btn btn-secondary" type="button" onclick="document.getElementById('invite-modal').close()">Cancel</button>
+            </div>
+        </form>
+    </dialog>
+    {% endif %}
+{% endblock %}

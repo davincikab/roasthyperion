@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block body_class %}map-page{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+          integrity="sha256-V2sIX92Uh6ZaGSFTKMHghsB85b9toJtmazgG09AI2uk=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.css"
+          integrity="sha256-17tTeM3yuBswUqyCE0vegMfNFyPAQk2mLxjdOYNFv7U=" crossorigin="" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
+            integrity="sha256-vpYzxNhw4m+zfxz+XFp3GBZnEUAD6hYgeseFDY2ordE=" crossorigin=""></script>
+    <script src="https://unpkg.com/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.js"
+            integrity="sha256-FD4+Xf03zRK5hC+WbuacQlCZctfkC20j0wgoxNy48pI=" crossorigin=""></script>
+{% endblock %}
+
+{% block body %}
+<div id="error-container" class="error-container" role="region" aria-label="Notifications" aria-live="polite" aria-atomic="true"></div>
+<div class="map-shell">
+    <div id="map"></div>
+    {% if project.status != "ready" %}
+        <div class="no-map-placeholder">No tiles yet — upload and ingest a tile pyramid to see the map.</div>
+    {% endif %}
+
+    <div class="map-panel">
+
+        <div class="panel-header">
+            <div class="d-flex">
+                <span class="status-badge {{ project.status }}"></span>
+                <h1>{{ project.name }}</h1>
+            </div>
+            {% if can_edit %}
+                <a href="{% url 'projects:edit' project.pk %}" class="icon-btn" title="Edit settings" aria-label="Edit settings">
+                    <i class="bi bi-gear" aria-hidden="true"></i>
+                </a>
+            {% endif %}
+        </div>
+
+        {% if project.status == "ready" %}
+            <div class="map-panel-section">
+                <h2>Annotations</h2>
+                <input type="search" id="annotations-search" class="annotations-search" placeholder="Search…">
+                <div id="annotations-list" class="annotations-list"></div>
+            </div>
+        {% endif %}
+
+        {% if project.ingest_error %}
+            <p class="message error">{{ project.ingest_error }}</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if project.status == "ready" %}
+    <script id="project-config" type="application/json">
+        {
+            "id": {{ project.pk }},
+            "tileUrlTemplate": "{% url 'projects:tile' project.pk 0 0 0 %}",
+            "annotationsUrl": "{% url 'annotations:list_create' project.pk %}",
+            "annotationDetailUrlTemplate": "{% url 'annotations:detail' project.pk 0 %}",
+            "centerLat": {{ project.center_lat|default:"null" }},
+            "centerLng": {{ project.center_lng|default:"null" }},
+            "minZoom": {{ project.min_zoom }},
+            "maxZoom": {{ project.max_zoom }},
+            "tms": {{ project.tms_scheme|yesno:"true,false" }},
+            "canEdit": {{ can_edit|yesno:"true,false" }}
+        }
+    </script>
+    <script src="{% static 'js/project_map.js' %}"></script>
+{% endif %}
+{% endblock %}

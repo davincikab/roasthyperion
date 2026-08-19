@@ -1,0 +1,8 @@
+{% autoescape off %}
+You've been invited to join an organization on Roasthyperion.
+
+Set your password using the link below:
+{{ protocol }}://{{ domain }}{% url 'accounts:password_reset_confirm' uidb64=uid token=token %}
+
+If you weren't expecting this, you can ignore this email.
+{% endautoescape %}

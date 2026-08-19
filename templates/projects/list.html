@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Projects{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>Projects</h1>
+        {% if can_create %}
+            <a class="btn" href="{% url 'projects:create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> New project</a>
+        {% endif %}
+    </div>
+
+    {% if can_edit %}
+        <p class="tile-upload-hint">
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+            To publish tiles: generate a tile pyramid locally in QGIS (Processing &rarr; "Generate XYZ Tiles"),
+            zip the output folder, and drop the zip into the path shown on a project below.
+        </p>
+    {% endif %}
+
+    {% if projects %}
+        <div class="card-grid">
+            {% for project in projects %}
+                <div class="card">
+                    <a class="card-link" href="{% url 'projects:detail' project.pk %}">
+                        <span class="status-badge {{ project.status }}">{{ project.get_status_display }}</span>
+                        <h3>{{ project.name }}</h3>
+                        {% if show_organization %}<p class="card-org">{{ project.organization.name }}</p>{% endif %}
+                        <p>{{ project.description|truncatewords:20 }}</p>
+                    </a>
+
+                    {% if can_edit %}
+                        <div class="card-tile-upload">
+                            <div class="card-tile-upload-label">Tile upload</div>
+                            <p><code>{{ project.landing_dir }}</code></p>
+                            {% if project.pending_files %}
+                                {% for f in project.pending_files %}
+                                    <div class="pending-file-row">
+                                        <div>
+                                            <div class="pending-file-name">{{ f.name }}</div>
+                                            <div class="pending-file-size">{{ f.size|filesizeformat }}</div>
+                                        </div>
+                                        <form method="post" action="{% url 'projects:ingest' project.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="filename" value="{{ f.name }}">
+                                            <button class="btn btn-sm" type="submit"><i class="bi bi-cloud-upload" aria-hidden="true"></i> Ingest</button>
+                                        </form>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p>No zip files waiting.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <nav class="pagination">
+                {% if page_obj.has_previous %}
+                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</a>
+                {% endif %}
+                <span class="pagination-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                {% endif %}
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <p>No projects yet.</p>
+            {% if can_create %}
+                <a class="btn" href="{% url 'projects:create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Create your first project</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}
