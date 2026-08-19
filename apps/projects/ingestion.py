@@ -79,8 +79,14 @@ def run_ingestion(project: Project, filename: str) -> None:
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         extracted_dir = Path(tmp_dir) / "extracted"
-        with zipfile.ZipFile(source_path) as zf:
-            _safe_extract(zf, extracted_dir)
+        try:
+            with zipfile.ZipFile(source_path) as zf:
+                _safe_extract(zf, extracted_dir)
+        except zipfile.BadZipFile as exc:
+            raise IngestError(
+                f"Uploaded zip is corrupted ({exc}) — the upload may have been interrupted. "
+                "Re-upload the file and try ingesting again."
+            ) from exc
 
         tiles_root = _find_tiles_root(extracted_dir)
 
