@@ -16,18 +16,23 @@ def get_active_organization(user) -> Organization | None:
     return membership.organization if membership else None
 
 
-def invite_member(organization: Organization, email: str, role: str, request=None) -> Membership:
+def invite_member(
+    organization: Organization, email: str, role: str, password: str = "", request=None
+) -> Membership:
     email = User.objects.normalize_email(email)
     user, created = User.objects.get_or_create(email=email, defaults={"username": email})
     if created:
-        user.set_unusable_password()
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save(update_fields=["password"])
 
     membership, _ = Membership.objects.update_or_create(
         user=user, organization=organization, defaults={"role": role}
     )
 
-    if created:
+    if created and not password:
         reset_form = PasswordResetForm(data={"email": email})
         if reset_form.is_valid():
             reset_form.save(

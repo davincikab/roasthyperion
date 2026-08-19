@@ -88,13 +88,18 @@ class InviteMemberView(OrganizationScopedMixin, RoleRequiredMixin, FormView):
             organization=organization,
             email=form.cleaned_data["email"],
             role=form.cleaned_data["role"],
+            password=form.cleaned_data["password"],
             request=self.request,
         )
-        messages.success(self.request, f"Invited {form.cleaned_data['email']}.")
+        if form.cleaned_data["password"]:
+            messages.success(self.request, f"Added {form.cleaned_data['email']} with the password you set.")
+        else:
+            messages.success(self.request, f"Invited {form.cleaned_data['email']}.")
         return redirect(self.get_team_url())
 
     def form_invalid(self, form):
-        messages.error(self.request, "Could not send invite — check the email address.")
+        errors = " ".join(e for field in form.errors.values() for e in field)
+        messages.error(self.request, errors or "Could not add member — check the form.")
         return redirect(self.get_team_url())
 
 

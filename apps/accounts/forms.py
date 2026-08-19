@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import PasswordChangeForm as DjangoPasswordChangeForm
 from django.contrib.auth.forms import UserChangeForm as DjangoUserChangeForm
 from django.contrib.auth.forms import UserCreationForm as DjangoUserCreationForm
+from django.contrib.auth.password_validation import validate_password
 from django.utils.text import slugify
 
 from .models import Membership, Organization, User
@@ -33,6 +34,17 @@ class UserChangeForm(DjangoUserChangeForm):
 class InviteMemberForm(forms.Form):
     email = forms.EmailField()
     role = forms.ChoiceField(choices=Membership.Role.choices)
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput,
+        help_text="Optional — set it directly instead of emailing an invite link (useful if email isn't configured).",
+    )
+
+    def clean_password(self):
+        password = self.cleaned_data.get("password")
+        if password:
+            validate_password(password)
+        return password
 
 
 class MembershipRoleForm(forms.ModelForm):
