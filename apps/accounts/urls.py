@@ -50,6 +50,24 @@ urlpatterns = [
         views.RemoveMemberView.as_view(),
         name="team_remove",
     ),
+    path("organizations/", views.OrganizationListView.as_view(), name="organization_list"),
+    path("organizations/new/", views.OrganizationCreateView.as_view(), name="organization_create"),
+    path("organizations/<int:org_id>/team/", views.TeamView.as_view(), name="team"),
+    path(
+        "organizations/<int:org_id>/team/invite/",
+        views.InviteMemberView.as_view(),
+        name="team_invite",
+    ),
+    path(
+        "organizations/<int:org_id>/team/<int:membership_id>/role/",
+        views.UpdateMemberRoleView.as_view(),
+        name="team_update_role",
+    ),
+    path(
+        "organizations/<int:org_id>/team/<int:membership_id>/remove/",
+        views.RemoveMemberView.as_view(),
+        name="team_remove",
+    ),
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path(
         "profile/password/",

@@ -2,30 +2,50 @@ from django.contrib import messages
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import FormView, ListView, TemplateView, View
+from django.views.generic import CreateView, FormView, ListView, TemplateView, View
 
-from .forms import InviteMemberForm, MembershipRoleForm, PasswordChangeForm
-from .models import Membership, User
+from .forms import InviteMemberForm, MembershipRoleForm, OrganizationForm, PasswordChangeForm
+from .models import Membership, Organization, User
 from .permissions import RoleRequiredMixin, SuperuserRequiredMixin
 from .services import get_active_organization, invite_member
 
 MEMBERS_PER_PAGE = 20
 USERS_PER_PAGE = 25
+ORGANIZATIONS_PER_PAGE = 25
 
 
-class TeamView(RoleRequiredMixin, TemplateView):
-    template_name = "accounts/team.html"
-    required_roles = (Membership.Role.ADMIN,)
+class OrganizationScopedMixin:
+    """Resolves the organization being managed from an optional `org_id` URL kwarg
+    (superusers reaching in from the org list) or, if absent, the requesting
+    user's own organization. RoleRequiredMixin still enforces that a non-superuser
+    can only ever land on an org they actually have the right role in."""
 
     def get_organization(self):
+        org_id = self.kwargs.get("org_id")
+        if org_id is not None:
+            return get_object_or_404(Organization, pk=org_id)
         return get_active_organization(self.request.user)
+
+    def get_team_url(self):
+        org_id = self.kwargs.get("org_id")
+        if org_id is not None:
+            return reverse("accounts:team", kwargs={"org_id": org_id})
+        return reverse("accounts:team")
+
+
+class TeamView(OrganizationScopedMixin, RoleRequiredMixin, TemplateView):
+    template_name = "accounts/team.html"
+    required_roles = (Membership.Role.ADMIN,)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         organization = self.get_organization()
+        org_id = self.kwargs.get("org_id")
         context["organization"] = organization
+        context["org_id"] = org_id
 
         memberships = (
             organization.memberships.select_related("user").order_by("user__email")
@@ -33,46 +53,55 @@ class TeamView(RoleRequiredMixin, TemplateView):
             else Membership.objects.none()
         )
         paginator = Paginator(memberships, MEMBERS_PER_PAGE)
-        context["page_obj"] = paginator.get_page(self.request.GET.get("page"))
-        context["memberships"] = context["page_obj"]
+        page_obj = paginator.get_page(self.request.GET.get("page"))
+        for membership in page_obj:
+            role_kwargs = {"membership_id": membership.pk}
+            remove_kwargs = {"membership_id": membership.pk}
+            if org_id is not None:
+                role_kwargs["org_id"] = org_id
+                remove_kwargs["org_id"] = org_id
+            membership.update_role_url = reverse("accounts:team_update_role", kwargs=role_kwargs)
+            membership.remove_url = reverse("accounts:team_remove", kwargs=remove_kwargs)
+        context["page_obj"] = page_obj
+        context["memberships"] = page_obj
 
+        context["invite_url"] = (
+            reverse("accounts:team_invite", kwargs={"org_id": org_id})
+            if org_id is not None
+            else reverse("accounts:team_invite")
+        )
         context["invite_form"] = InviteMemberForm()
         context["role_choices"] = Membership.Role.choices
         return context
 
 
-class InviteMemberView(RoleRequiredMixin, FormView):
+class InviteMemberView(OrganizationScopedMixin, RoleRequiredMixin, FormView):
     form_class = InviteMemberForm
     required_roles = (Membership.Role.ADMIN,)
-
-    def get_organization(self):
-        return get_active_organization(self.request.user)
 
     def form_valid(self, form):
         organization = self.get_organization()
         if organization is None:
             messages.error(self.request, "You don't belong to an organization.")
-            return redirect(reverse("accounts:team"))
+            return redirect(self.get_team_url())
         invite_member(
             organization=organization,
             email=form.cleaned_data["email"],
             role=form.cleaned_data["role"],
+            request=self.request,
         )
         messages.success(self.request, f"Invited {form.cleaned_data['email']}.")
-        return redirect(reverse("accounts:team"))
+        return redirect(self.get_team_url())
 
     def form_invalid(self, form):
         messages.error(self.request, "Could not send invite — check the email address.")
-        return redirect(reverse("accounts:team"))
+        return redirect(self.get_team_url())
 
 
-class UpdateMemberRoleView(RoleRequiredMixin, View):
+class UpdateMemberRoleView(OrganizationScopedMixin, RoleRequiredMixin, View):
     required_roles = (Membership.Role.ADMIN,)
 
-    def get_organization(self):
-        return get_active_organization(self.request.user)
-
-    def post(self, request, membership_id):
+    def post(self, request, membership_id, **kwargs):
         membership = get_object_or_404(
             Membership, pk=membership_id, organization=self.get_organization()
         )
@@ -82,16 +111,13 @@ class UpdateMemberRoleView(RoleRequiredMixin, View):
             messages.success(request, f"Updated role for {membership.user}.")
         else:
             messages.error(request, "Could not update role.")
-        return redirect(reverse("accounts:team"))
+        return redirect(self.get_team_url())
 
 
-class RemoveMemberView(RoleRequiredMixin, View):
+class RemoveMemberView(OrganizationScopedMixin, RoleRequiredMixin, View):
     required_roles = (Membership.Role.ADMIN,)
 
-    def get_organization(self):
-        return get_active_organization(self.request.user)
-
-    def post(self, request, membership_id):
+    def post(self, request, membership_id, **kwargs):
         membership = get_object_or_404(
             Membership, pk=membership_id, organization=self.get_organization()
         )
@@ -101,7 +127,42 @@ class RemoveMemberView(RoleRequiredMixin, View):
             user_label = str(membership.user)
             membership.delete()
             messages.success(request, f"Removed {user_label}.")
-        return redirect(reverse("accounts:team"))
+        return redirect(self.get_team_url())
+
+
+class OrganizationListView(SuperuserRequiredMixin, ListView):
+    """Superuser-only: every organization on the platform, with a way to create more."""
+
+    model = Organization
+    template_name = "accounts/organization_list.html"
+    context_object_name = "organizations"
+    paginate_by = ORGANIZATIONS_PER_PAGE
+
+    def get_queryset(self):
+        return Organization.objects.annotate(member_count=Count("memberships")).order_by("name")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = OrganizationForm()
+        return context
+
+
+class OrganizationCreateView(SuperuserRequiredMixin, CreateView):
+    model = Organization
+    form_class = OrganizationForm
+    template_name = "accounts/organization_list.html"
+
+    def get_success_url(self):
+        return reverse("accounts:team", kwargs={"org_id": self.object.pk})
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f"Created organization {self.object.name}.")
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, "Could not create organization — check the name.")
+        return redirect(reverse("accounts:organization_list"))
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):

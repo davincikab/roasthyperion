@@ -25,6 +25,7 @@
                         <a href="{% url 'accounts:team' %}"><i class="bi bi-people" aria-hidden="true"></i> Team</a>
                         <a href="{% url 'accounts:profile' %}"><i class="bi bi-person" aria-hidden="true"></i> Profile</a>
                         {% if user.is_superuser %}
+                            <a href="{% url 'accounts:organization_list' %}"><i class="bi bi-building" aria-hidden="true"></i> Organizations</a>
                             <a href="{% url 'accounts:user_management' %}"><i class="bi bi-shield-lock" aria-hidden="true"></i> Manage users</a>
                         {% endif %}
                         <form action="{% url 'accounts:logout' %}" method="post">

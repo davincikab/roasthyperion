@@ -2,8 +2,9 @@ from django import forms
 from django.contrib.auth.forms import PasswordChangeForm as DjangoPasswordChangeForm
 from django.contrib.auth.forms import UserChangeForm as DjangoUserChangeForm
 from django.contrib.auth.forms import UserCreationForm as DjangoUserCreationForm
+from django.utils.text import slugify
 
-from .models import Membership, User
+from .models import Membership, Organization, User
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -38,3 +39,23 @@ class MembershipRoleForm(forms.ModelForm):
     class Meta:
         model = Membership
         fields = ("role",)
+
+
+class OrganizationForm(forms.ModelForm):
+    class Meta:
+        model = Organization
+        fields = ("name",)
+
+    def save(self, commit=True):
+        organization = super().save(commit=False)
+        if not organization.slug:
+            base_slug = slugify(organization.name)[:50] or "org"
+            slug = base_slug
+            suffix = 1
+            while Organization.objects.filter(slug=slug).exclude(pk=organization.pk).exists():
+                suffix += 1
+                slug = f"{base_slug}-{suffix}"
+            organization.slug = slug
+        if commit:
+            organization.save()
+        return organization

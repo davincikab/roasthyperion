@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Organizations{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>Organizations</h1>
+        <button class="btn" type="button" onclick="document.getElementById('create-org-modal').showModal()">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> New organization
+        </button>
+    </div>
+
+    <div class="panel-section">
+        {% if organizations %}
+            <table class="team-table">
+                <thead>
+                    <tr><th>Name</th><th>Members</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for organization in organizations %}
+                        <tr>
+                            <td>{{ organization.name }}</td>
+                            <td>{{ organization.member_count }}</td>
+                            <td>
+                                <a class="btn btn-secondary btn-sm" href="{% url 'accounts:team' org_id=organization.pk %}">
+                                    <i class="bi bi-people" aria-hidden="true"></i> Manage team
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if page_obj.has_other_pages %}
+                <nav class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</a>
+                    {% endif %}
+                    <span class="pagination-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% else %}
+            <p>No organizations yet.</p>
+        {% endif %}
+    </div>
+
+    <dialog id="create-org-modal" class="modal">
+        <h2>New organization</h2>
+        <form class="stacked form-grid" method="post" action="{% url 'accounts:organization_create' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="modal-actions">
+                <button class="btn" type="submit">Create</button>
+                <button class="btn btn-secondary" type="button" onclick="document.getElementById('create-org-modal').close()">Cancel</button>
+            </div>
+        </form>
+    </dialog>
+{% endblock %}

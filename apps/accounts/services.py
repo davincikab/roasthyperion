@@ -16,7 +16,7 @@ def get_active_organization(user) -> Organization | None:
     return membership.organization if membership else None
 
 
-def invite_member(organization: Organization, email: str, role: str) -> Membership:
+def invite_member(organization: Organization, email: str, role: str, request=None) -> Membership:
     email = User.objects.normalize_email(email)
     user, created = User.objects.get_or_create(email=email, defaults={"username": email})
     if created:
@@ -33,6 +33,7 @@ def invite_member(organization: Organization, email: str, role: str) -> Membersh
             reset_form.save(
                 email_template_name="accounts/emails/invite_email.txt",
                 subject_template_name="accounts/emails/invite_subject.txt",
+                request=request,
             )
 
     return membership
