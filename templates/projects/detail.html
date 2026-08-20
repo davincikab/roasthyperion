@@ -27,7 +27,7 @@
         <div class="panel-header">
             <div class="d-flex">
                 <span class="status-badge {{ project.status }}"></span>
-                <h1>{{ project.name }}</h1>
+                <h1 class="my-0">{{ project.name }}</h1>
             </div>
             {% if can_edit %}
                 <a href="{% url 'projects:edit' project.pk %}" class="icon-btn" title="Edit settings" aria-label="Edit settings">

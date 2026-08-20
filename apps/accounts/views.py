@@ -201,14 +201,29 @@ class UserManagementListView(SuperuserRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = User.objects.prefetch_related("memberships__organization").order_by("email")
+
         query = self.request.GET.get("q", "").strip()
         if query:
             queryset = queryset.filter(email__icontains=query)
-        return queryset
+
+        organization_id = self.request.GET.get("organization", "").strip()
+        if organization_id:
+            queryset = queryset.filter(memberships__organization_id=organization_id)
+
+        active = self.request.GET.get("active", "").strip()
+        if active == "active":
+            queryset = queryset.filter(is_active=True)
+        elif active == "inactive":
+            queryset = queryset.filter(is_active=False)
+
+        return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["query"] = self.request.GET.get("q", "")
+        context["organization_filter"] = self.request.GET.get("organization", "")
+        context["active_filter"] = self.request.GET.get("active", "")
+        context["organizations"] = Organization.objects.order_by("name")
         return context
 
 

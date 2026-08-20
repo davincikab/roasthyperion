@@ -398,13 +398,13 @@ a:hover { text-decoration: underline; }
     gap: var(--space-sm);
     font-size: 0.72rem;
     font-weight: 650;
-    padding: var(--space-xs) var(--space-sm);
+    padding: 5px;
     border-radius: 999px;
     background: var(--color-bg);
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    min-height: var(--touch-target-min);
+    /* min-height: var(--touch-target-min); */
     display: inline-flex;
     align-items: center;
 }
@@ -450,6 +450,34 @@ form.stacked select:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+/* Checkboxes/radios are a different shape than text inputs — the touch
+   target should come from padding on the row, not from stretching the box
+   itself into a giant square. */
+form.stacked p:has(> input[type="checkbox"]),
+form.stacked p:has(> input[type="radio"]) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) 0;
+    min-height: var(--touch-target-min);
+}
+form.stacked input[type="checkbox"],
+form.stacked input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid var(--color-border-strong);
+    accent-color: var(--color-primary);
+    flex: 0 0 auto;
+}
+form.stacked .helptext {
+    flex-basis: 100%;
+    color: var(--color-text-faint);
+    font-size: 0.8rem;
 }
 
 form.stacked input:focus-visible,
@@ -639,19 +667,19 @@ body.map-page { background: var(--color-text); }
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
-    padding: var(--space-lg);
+    padding:var(--space-md) var(--space-lg);
 }
 
 .map-panel .panel-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: var(--space-lg);
     margin-bottom: var(--space-lg);
 }
 
 .map-panel h1 { font-size: 1.1rem; margin: 0; }
-.map-panel .status-badge { margin-bottom: var(--space-sm); }
+.map-panel .status-badge { margin-bottom: 0; margin-right:5px; }
 
 .map-panel-section {
     margin-top: var(--space-md);
@@ -682,6 +710,29 @@ body.map-page { background: var(--color-text); }
     border-radius: var(--radius-sm);
     font-family: inherit;
     font-size: 0.82rem;
+    min-height: var(--touch-target-min);
+}
+
+.list-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+.list-filters .annotations-search {
+    width: auto;
+    flex: 1 1 220px;
+    margin: 0;
+}
+.list-filters select {
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    background: var(--color-surface);
+    color: var(--color-text);
     min-height: var(--touch-target-min);
 }
 .annotations-search:focus {

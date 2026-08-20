@@ -16,6 +16,20 @@
         </p>
     {% endif %}
 
+    <form class="stacked list-filters" method="get">
+        <input type="search" name="q" value="{{ query }}" placeholder="Search by name…" class="annotations-search">
+        <select name="status" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-secondary btn-sm" type="submit">Filter</button>
+        {% if query or status_filter %}
+            <a class="link-button" href="{% url 'projects:list' %}">Clear</a>
+        {% endif %}
+    </form>
+
     {% if projects %}
         <div class="card-grid">
             {% for project in projects %}
@@ -66,19 +80,24 @@
         {% if page_obj.has_other_pages %}
             <nav class="pagination">
                 {% if page_obj.has_previous %}
-                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</a>
+                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"><i class="bi bi-chevron-left" aria-hidden="true"></i> Previous</a>
                 {% endif %}
                 <span class="pagination-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                 {% if page_obj.has_next %}
-                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Next <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
                 {% endif %}
             </nav>
         {% endif %}
     {% else %}
         <div class="empty-state">
-            <p>No projects yet.</p>
-            {% if can_create %}
-                <a class="btn" href="{% url 'projects:create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Create your first project</a>
+            {% if query or status_filter %}
+                <p>No projects match your search/filter.</p>
+                <a class="btn btn-secondary" href="{% url 'projects:list' %}">Clear filters</a>
+            {% else %}
+                <p>No projects yet.</p>
+                {% if can_create %}
+                    <a class="btn" href="{% url 'projects:create' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Create your first project</a>
+                {% endif %}
             {% endif %}
         </div>
     {% endif %}

@@ -27,8 +27,19 @@ class ProjectListView(RoleRequiredMixin, ListView):
 
     def get_queryset(self):
         if self.request.user.is_superuser:
-            return Project.objects.select_related("organization").order_by("-created_at")
-        return Project.objects.filter(organization=self.get_organization()).order_by("-created_at")
+            queryset = Project.objects.select_related("organization")
+        else:
+            queryset = Project.objects.filter(organization=self.get_organization())
+
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            queryset = queryset.filter(name__icontains=query)
+
+        status = self.request.GET.get("status", "").strip()
+        if status in Project.Status.values:
+            queryset = queryset.filter(status=status)
+
+        return queryset.order_by("-created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -39,6 +50,9 @@ class ProjectListView(RoleRequiredMixin, ListView):
         context["can_create"] = can_edit
         context["can_edit"] = can_edit
         context["show_organization"] = self.request.user.is_superuser
+        context["query"] = self.request.GET.get("q", "")
+        context["status_filter"] = self.request.GET.get("status", "")
+        context["status_choices"] = Project.Status.choices
         if can_edit:
             for project in context["projects"]:
                 project.pending_files = list_pending_files(project)
