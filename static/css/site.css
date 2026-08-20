@@ -1010,6 +1010,15 @@ body.map-page { background: var(--color-text); }
     align-items: center;
     gap: var(--space-md);
 }
+.map-ctrl-slider-bottom-center {
+    position: absolute;
+    bottom: var(--space-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    margin-bottom: 0;
+}
+
 .map-ctrl-slider label {
     font-size: 0.78rem;
     color: var(--color-text-muted);

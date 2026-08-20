@@ -221,41 +221,32 @@
     }
 
     function addOpacityControl() {
-        const control = {
-            onAdd: function () {
-                const container = document.createElement("div");
-                container.className = "maplibregl-ctrl map-ctrl-slider";
+        const container = document.createElement("div");
+        container.className = "map-ctrl-slider map-ctrl-slider-bottom-center";
 
-                const label = document.createElement("label");
-                label.textContent = "Orthomosaic opacity";
-                label.htmlFor = "opacity-slider";
-                container.appendChild(label);
+        const label = document.createElement("label");
+        label.textContent = "Orthomosaic opacity";
+        label.htmlFor = "opacity-slider";
+        container.appendChild(label);
 
-                const input = document.createElement("input");
-                input.id = "opacity-slider";
-                input.type = "range";
-                input.setAttribute("aria-label", "Adjust annotation opacity");
-                input.setAttribute("aria-valuemin", "0");
-                input.setAttribute("aria-valuemax", "100");
-                input.setAttribute("aria-valuenow", "100");
-                input.min = "0";
-                input.max = "1";
-                input.step = "0.05";
-                input.value = "1";
-                input.addEventListener("input", function () {
-                    map.setPaintProperty("orthomosaic-layer", "raster-opacity", parseFloat(input.value));
-                    input.setAttribute("aria-valuenow", Math.round(parseFloat(input.value) * 100));
-                });
-                container.appendChild(input);
+        const input = document.createElement("input");
+        input.id = "opacity-slider";
+        input.type = "range";
+        input.setAttribute("aria-label", "Adjust annotation opacity");
+        input.setAttribute("aria-valuemin", "0");
+        input.setAttribute("aria-valuemax", "100");
+        input.setAttribute("aria-valuenow", "100");
+        input.min = "0";
+        input.max = "1";
+        input.step = "0.05";
+        input.value = "1";
+        input.addEventListener("input", function () {
+            map.setPaintProperty("orthomosaic-layer", "raster-opacity", parseFloat(input.value));
+            input.setAttribute("aria-valuenow", Math.round(parseFloat(input.value) * 100));
+        });
+        container.appendChild(input);
 
-                this._container = container;
-                return container;
-            },
-            onRemove: function () {
-                this._container.remove();
-            },
-        };
-        map.addControl(control, "bottom-right");
+        document.querySelector(".map-shell").appendChild(container);
     }
 
     // ---------- Annotation layers ----------
